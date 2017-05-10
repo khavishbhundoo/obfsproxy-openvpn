@@ -73,6 +73,7 @@ You would need to install latest python 2.7.x and then run the following command
 If your server is actually a VM instance on cloud platforms like Google Compute Engine(GCE) or Amazon EC2 you need to add a firewall rule manually as well
 
 Below is how it should be if you are on GCE
+
 ![firewall](https://github.com/khavishbhundoo/obfsproxy-openvpn/blob/master/firewalld.png)
 
 
