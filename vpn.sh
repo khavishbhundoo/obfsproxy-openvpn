@@ -189,7 +189,6 @@ cat > $HOME/details.txt <<EOF
 External IP : ${ipaddr}
 Cilent config: ${HOME}/client-files/scrambled-client.ovpn 
 Copy client config to the config folder of your OpenVPN installation
-Windows Client Setup : https://nordvpn.com/tutorials/obfsproxy/windows/
-Reboot the server and then you should be able to connect just fine
+Read Tutorial @ https://github.com/khavishbhundoo/obfsproxy-openvpn/
 EOF
 cat $HOME/details.txt
