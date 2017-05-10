@@ -68,6 +68,12 @@ You would need to install latest python 2.7.x and then run the following command
  
 `obfsproxy --log-min-severity info obfs3 socks 127.0.0.1:1050`
 
+# Firewall rules for Cloud Platforms
+
+If your server is actually a VM instance on cloud platforms like Google Compute Engine(GCE) or Amazon EC2 you need to add a firewall rule manually as well
+
+Below is how it should be if you are on GCE
+![firewall](https://github.com/khavishbhundoo/obfsproxy-openvpn/blob/master/firewalld.png)
 
 
 # Disclaimer
