@@ -10,13 +10,12 @@ Wget has to be installed
 
 # Installation
 
-You will need `wget` and root previleges to execute the sript on your server
+You will need `wget` and root previleges to execute the script on your server
 
 Run the following after having logined as a user with admin privileges to execute the script
 
-`wget https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/vpn.sh -O vpn.sh`
+`wget https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/vpn.sh -O vpn.sh && sudo bash vpn.sh`
 
-`sudo bash vpn.sh`
 
 After the execution is complete , download the `scrambled-client.ovpn` file and reboot the server
 
