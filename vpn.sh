@@ -1,7 +1,7 @@
 #!/bin/bash
 cat <<EOF
 #########################################################################
-#       Setup OpenVPN + Xor patch to bypass Advanced Firewall           # 
+#       Setup OpenVPN + Obfsproxy to bypass Advanced Firewall           # 
 #       Bypass China, Iran and Pakistan Internet Censorship             #
 #       Author : Khavish Anshudass Bhundoo                              #
 #########################################################################             
@@ -84,9 +84,8 @@ chmod +x /etc/rc.d/rc.local
 #Downloading Easy RSA package to create keys and certificates
 echo "Setting Up Keys and Certificates"
 {
-wget  http://build.openvpn.net/downloads/releases/easy-rsa-2.2.0_master.tar.gz
-tar zxvf easy-rsa-2.2.0_master.tar.gz
-cp -R easy-rsa-2.2.0_master/easy-rsa/ /etc/openvpn/
+yum install -y -q easy-rsa
+rsync -av /usr/share/easy-rsa/ /etc/openvpn/easy-rsa/
 chown -R $USER /etc/openvpn/easy-rsa/
 cd /etc/openvpn/easy-rsa/2.0/
 source vars
@@ -98,7 +97,7 @@ source vars
 ./build-key client
 {
 cd /etc/openvpn/easy-rsa/2.0/keys
-cp ca.crt ca.key dh1024.pem server.crt server.key /etc/openvpn
+cp ca.crt ca.key dh2048.pem server.crt server.key /etc/openvpn
 mkdir -p $HOME/client-files
 cp ca.crt client.crt client.key $HOME/client-files
 openvpn --genkey --secret /etc/openvpn/ta.key
@@ -123,11 +122,18 @@ cipher AES-256-CBC
 comp-lzo
 verb 3
 fast-io
+auth SHA512
 script-security 2
 socks-proxy-retry
 socks-proxy 127.0.0.1 1050
 EOL
-
+cd $HOME/client-files
+# Now merge certs and keys into client script, so we only have one file to handle
+wget https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/merge.sh -O merge.sh
+sudo chmod +x merge.sh
+sudo ./merge.sh
+chown $USER $HOME/client-files/scrambled-client.ovpn
+#
 cat > /etc/openvpn/server.conf <<EOL
 port 443
 proto tcp #for obfsproxy, otherwise udp
@@ -138,7 +144,7 @@ key /etc/openvpn/server.key
 tls-auth /etc/openvpn/ta.key 0
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
-dh /etc/openvpn/dh1024.pem
+dh /etc/openvpn/dh2048.pem
 server 10.8.0.0 255.255.255.0
 cipher AES-256-CBC
 comp-lzo
@@ -168,19 +174,21 @@ sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
 grep -qF "net.ipv4.ip_forward" /etc/sysctl.conf  || echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf #Add setting to sysctl.conf if needed
 sysctl -p
 #Adding proper firewall rules
-firewall-cmd --permanent  --add-service openvpn
 firewall-cmd --permanent  --add-service http
 firewall-cmd --permanent  --add-service https
+firewall-cmd --permanent  --add-service openvpn
 firewall-cmd --permanent  --add-masquerade
-systemctl restart  firewalld
+firewall-cmd --permanent  --add-port=21194/tcp
+firewall-cmd --permanent  --add-port=443/tcp
+firewall-cmd --reload
 } &> /dev/null
 cat > $HOME/details.txt <<EOF
 #########################################
 #Scrambled OpenVpn Server Setup Complete#             
 #########################################
 External IP : ${ipaddr}
-Cilent config: ${HOME}/client-files/ 
-Copy all files in ${HOME}/client-files/ to the config folder of your OpenVPN installation
+Cilent config: ${HOME}/client-files/scrambled-client.ovpn 
+Copy client config to the config folder of your OpenVPN installation
 Windows Client Setup : https://nordvpn.com/tutorials/obfsproxy/windows/
 Reboot the server and then you should be able to connect just fine
 EOF
