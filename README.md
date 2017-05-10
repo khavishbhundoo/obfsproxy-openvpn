@@ -4,9 +4,6 @@ ISPs in high authorian regimes such as in China , Iran and Pakistan can easily d
 # Prerequisits
 This bash script is compatible with Centos 7 / RHEL 7.x OS. 
 
-Wget has to be installed 
-
-
 # Installation
 
 You will need to have root previleges to execute the script on your server
