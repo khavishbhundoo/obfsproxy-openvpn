@@ -13,7 +13,7 @@ Run the following after having logined as a user with admin privileges to execut
 `curl -so vpn.sh -L  https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/vpn.sh  && sudo bash vpn.sh`
 
 
-After the execution is complete , download the `scrambled-client.ovpn` file and reboot the server
+After the execution is complete , download the `scrambled-client.ovpn` file.
 
 # Usage
 This section will consist of detailed instructions on how to connect to the VPN 
