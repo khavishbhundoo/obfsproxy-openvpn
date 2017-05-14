@@ -2,9 +2,9 @@
 cat <<EOF
 #########################################################################
 #       Setup OpenVPN + Obfsproxy to bypass Advanced Firewall           # 
-#       Bypass China, Iran and Pakistan Internet Censorship             #
+#       Bypass China, Syria , Iran and Pakistan Internet Censorship     #
 #       Author : Khavish Anshudass Bhundoo                              #
-#########################################################################             
+#########################################################################      
 EOF
 if [ "$EUID" -ne 0 ]
   then echo "Please run as root"
@@ -28,15 +28,13 @@ echo  "Creating 512MB of swap space as no swap space currently exist"
 } &> /dev/null
 fi	
 #
-yum -y -q install redhat-lsb-core
 #Setting Home directory
 HOME=$(getent passwd $SUDO_USER | cut -d: -f6)
-#Getting the version of the OS 
-version=$(lsb_release -sr | sed 's/\.[^ ]*/ /g') 
 echo  "Setting Up EPEL  Repository"
 {
-wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-${version:0:1}.noarch.rpm
-sudo rpm -Uvh epel-release-latest-${version:0:1}.noarch.rpm
+yum -y -q install wget
+wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+sudo rpm -Uvh epel-release-latest-7.noarch.rpm
 #
 } &> /dev/null
 #Time to install and configure Yum Priorities
@@ -64,7 +62,6 @@ echo "Installing useful tools{nano , wget, make}"
 yum -y -q install nano
 yum -y -q install wget
 yum -y -q install make 
-yum -y -q install dmidecode
 } 2>&1 | grep -v "already installed and latest version"
 echo "Installing OpenVPN"
 {
@@ -77,8 +74,9 @@ echo "Installing obfsproxy"
 yum install -y -q make automake gcc python-pip python-devel libyaml-devel
 pip install --upgrade pip
 pip install obfsproxy 
+yum install -y -q screen
+screen -d -m obfsproxy --log-file=obfsproxy.log --log-min-severity=info obfs3 --dest=127.0.0.1:443 server 0.0.0.0:21194 
 echo "obfsproxy --log-file=obfsproxy.log --log-min-severity=info obfs3 --dest=127.0.0.1:443 server 0.0.0.0:21194" >> /etc/rc.d/rc.local
-#sudo pip install --upgrade Automat
 chmod +x /etc/rc.d/rc.local
 } &> /dev/null
 #Downloading Easy RSA package to create keys and certificates
@@ -102,8 +100,10 @@ mkdir -p $HOME/client-files
 cp ca.crt client.crt client.key $HOME/client-files
 openvpn --genkey --secret /etc/openvpn/ta.key
 cp /etc/openvpn/ta.key $HOME/client-files
+} &> /dev/null
+echo "Configuring OpenVPN with obfsproxy"
+{
 ipaddr=$(curl -s http://whatismyip.akamai.com/)
-keyword=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 20 | head -n 1)
 cat > $HOME/client-files/scrambled-client.ovpn <<EOL
 client
 dev tun
@@ -168,6 +168,10 @@ EOL
 #creating openvpn group and user
 /usr/sbin/groupadd openvpn
 useradd -G openvpn openvpn
+systemctl restart openvpn@server
+} &> /dev/null
+echo "Adding proper firewall and ip forwarding rules"
+{
 #
 #Enable IP packet forwarding so that our VPN traffic can pass through.
 sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf 
@@ -189,6 +193,6 @@ cat > $HOME/details.txt <<EOF
 External IP : ${ipaddr}
 Cilent config: ${HOME}/client-files/scrambled-client.ovpn 
 Copy client config to the config folder of your OpenVPN installation
-Read Tutorial @ https://github.com/khavishbhundoo/obfsproxy-openvpn/
+Read Tutorial @ https://github.com/khavishbhundoo/obfsproxy-openvpn/ and setup obfsproxy on your computer
 EOF
 cat $HOME/details.txt
