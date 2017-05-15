@@ -73,6 +73,9 @@ Below is how it should be if you are on GCE
 
 ![firewall](https://github.com/khavishbhundoo/obfsproxy-openvpn/blob/master/firewalld.png)
 
+# Video
+[![video tutorial](https://img.youtube.com/vi/BNcowGTHHDI/0.jpg)](https://www.youtube.com/watch?v=BNcowGTHHDI)
+
 
 # Disclaimer
 Author is not responsible for any your actions , use this script at your own risk
