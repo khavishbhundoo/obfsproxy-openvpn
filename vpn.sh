@@ -147,7 +147,7 @@ tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
 dh /etc/openvpn/dh2048.pem
 server 10.8.0.0 255.255.255.0
 cipher AES-256-CBC
-comp-lzo
+compress lz4
 persist-key
 persist-tun
 user openvpn      
