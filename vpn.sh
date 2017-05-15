@@ -119,7 +119,7 @@ key client.key
 tls-auth ta.key 1
 ns-cert-type server
 cipher AES-256-CBC
-comp-lzo
+compress lz4
 verb 3
 fast-io
 auth SHA512
