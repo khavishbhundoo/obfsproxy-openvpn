@@ -10,17 +10,21 @@
 #             or 
 #          ca /etc/local/openvpn/ca.crt 
 ########################################################################
-#  Arguments list:
-#  $1 - cilent name
-#  $2 - destination ovpn file
+#  Name of certs and keys and client ovpn script
 #
-  
+ 
 ca="ca.crt"
-cert="$1.crt"
-key="$1.key"
+cert="client.crt"
+key="client.key"
 tlsauth="ta.key"
-ovpndest="$2.ovpn"
-  
+ovpndest="scrambled-client.ovpn"
+ 
+########################################################################
+#   Backup to new subdirectory, just incase
+#
+mkdir -p backup
+cp $ca $cert $key $tlsauth $ovpndest ./backup
+ 
 ########################################################################
 #   Delete existing call to keys and certs
 #
@@ -29,29 +33,29 @@ ovpndest="$2.ovpn"
     -e '/cert .*'$cert'/d' \
     -e '/key .*'$key'/d' \
     -e '/tls-auth .*'$tlsauth'/d' $ovpndest 
-  
+ 
 ########################################################################
 #   Add keys and certs inline
 #
 echo "key-direction 1" >> $ovpndest
-  
+ 
 echo "<ca>" >> $ovpndest
 awk /BEGIN/,/END/ < ./$ca >> $ovpndest
 echo "</ca>" >> $ovpndest
-  
+ 
 echo "<cert>" >> $ovpndest
 awk /BEGIN/,/END/ < ./$cert >> $ovpndest
 echo "</cert>" >> $ovpndest
-  
+ 
 echo "<key>" >> $ovpndest
 awk /BEGIN/,/END/ < ./$key >> $ovpndest
 echo "</key>" >> $ovpndest
-  
+ 
 echo "<tls-auth>" >> $ovpndest
 awk /BEGIN/,/END/ < ./$tlsauth >> $ovpndest
 echo "</tls-auth>" >> $ovpndest
-  
+ 
 ########################################################################
-#   Delete key and cert files
+#   Delete key and cert files, backup already made hopefully
 #
 rm $ca $cert $key $tlsauth
