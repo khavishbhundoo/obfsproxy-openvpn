@@ -10,7 +10,7 @@ You will need to have root previleges to execute the script on your server
 
 Run the following after having logined as a user with admin privileges to execute the script
 
-`curl -so vpn.sh -L  https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/vpn.sh  && sudo bash vpn.sh`
+`curl -so openvpn_obfsproxy.sh -L  https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/openvpn_obfsproxy.sh  && sudo bash openvpn_obfsproxy.sh`
 
 
 After the execution is complete , download the `scrambled-client.ovpn` file.
