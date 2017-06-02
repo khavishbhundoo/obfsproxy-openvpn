@@ -1,0 +1,14 @@
+obfsproxy-openvpn                                                     CHANGELOG
+|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+
+28 May 2017, v0.1
+
+- Added a menu display
+- Implemented add client feature
+- Implemented remove client feature
+- Implemented user/password authentication(PAM)
+- Added automated certificates generation
+- Added multiple dns servers ( GoogleDNS and OpenDNS) 
+- Prevent DNS leaks by blocking outside dns
+- Added cronjob to update OpenVPN and Obfsproxy automatically
+- Minor bug fixes
