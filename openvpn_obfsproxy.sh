@@ -400,7 +400,7 @@ cp ca.crt "$cilent_user".crt "$cilent_user".key "$HOME"/client-files/"$cilent_us
 cp /etc/openvpn/ta.key "$HOME"/client-files/"$cilent_user"
 cd "$HOME"/client-files/"$cilent_user"
 # Now merge certs and keys into client script, so we only have one file to handle
-wget -q https://www.dropbox.com/s/gjbrl4xm1uv5wkx/merge.sh?dl=0 -O merge.sh
+wget -q https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/merge.sh -O merge.sh
 sudo chmod +x merge.sh
 sudo ./merge.sh "$cilent_user" scrambled-client
 chown "$USER" "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn
