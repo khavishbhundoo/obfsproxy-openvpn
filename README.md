@@ -1,5 +1,5 @@
 # obfsproxy-openvpn
-ISPs in high authorian regimes such as in China , Iran and Pakistan can easily detect and block standard VPN traffic.This bash script automatically install OpenVPN and  Obfsproxy to [obsfucate openvpn traffic](https://community.openvpn.net/openvpn/wiki/TrafficObfuscation) making it very difficult to detect and block.At the time of this writing this method successfully bypasses current firewalls and internet filters.
+ISPs in high authorian regimes  can easily detect and block standard VPN traffic.This bash script automatically install OpenVPN and  Obfsproxy to [obsfucate openvpn traffic](https://community.openvpn.net/openvpn/wiki/TrafficObfuscation) making it very difficult to detect and block.At the time of this writing this method successfully bypasses current firewalls and internet filters.
 
 # Prerequisits
 This bash script is compatible with Centos 7 / RHEL 7.x OS. 
