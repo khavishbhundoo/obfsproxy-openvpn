@@ -2,7 +2,8 @@
 cat <<EOF
 #########################################################################
 #       Setup OpenVPN + Obfsproxy to bypass Advanced Firewall           # 
-#       Bypass China, Syria , Iran and Pakistan Internet Censorship     #
+#       Bypass Advanced Internet Censorship                             #
+#       Github : https://github.com/khavishbhundoo/obfsproxy-openvpn/   #                                                             #
 #       Author : Khavish Anshudass Bhundoo                              #
 #########################################################################      
 EOF
