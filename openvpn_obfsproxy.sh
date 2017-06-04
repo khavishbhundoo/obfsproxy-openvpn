@@ -224,7 +224,7 @@ persist-tun
 ca ca.crt
 cert client.crt
 key client.key
-tls-auth ta.key 1
+tls-crypt  ta.key 
 ns-cert-type server
 cipher AES-256-CBC
 compress lz4
@@ -252,7 +252,7 @@ dev tun
 ca /etc/openvpn/ca.crt
 cert /etc/openvpn/server.crt
 key /etc/openvpn/server.key
-tls-auth /etc/openvpn/ta.key 0
+tls-crypt /etc/openvpn/ta.key 
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
 dh /etc/openvpn/dh2048.pem
@@ -383,7 +383,7 @@ persist-tun
 ca ca.crt
 cert client.crt
 key client.key
-tls-auth ta.key 1
+tls-crypt  ta.key 
 ns-cert-type server
 cipher AES-256-CBC
 compress lz4
@@ -443,7 +443,10 @@ read -r -p "Type the client username which you want to delete : "  cilent
 {
 # Check if user / pass authentication is used
 if [[ $(grep -o '^[^#]*' /etc/openvpn/server.conf | grep "openvpn-plugin-auth-pam.so") ]] ; then
+read -n1 -r -p "Are you sure you want to delete user $cilent (y/n)? : " choice
+if [[ $choice =~ ^[Yy]$ ]] ; then
 userdel -Z -r -f "$cilent"
+fi
 fi
 rm -rf "$HOME"/client-files/"$cilent"
 cd /etc/openvpn/easy-rsa/2.0/
