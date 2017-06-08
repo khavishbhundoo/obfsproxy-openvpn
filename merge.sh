@@ -14,13 +14,13 @@
 #  $1 - cilent name
 #  $2 - destination ovpn file
 #
-  
+   
 ca="ca.crt"
 cert="$1.crt"
 key="$1.key"
-tlsauth="ta.key"
+tlscrypt="ta.key"
 ovpndest="$2.ovpn"
-  
+   
 ########################################################################
 #   Delete existing call to keys and certs
 #
@@ -28,29 +28,29 @@ ovpndest="$2.ovpn"
     -e '/ca .*'$ca'/d'  \
     -e '/cert .*'$cert'/d' \
     -e '/key .*'$key'/d' \
-    -e '/tls-auth .*'$tlsauth'/d' $ovpndest 
-  
+    -e '/tls-crypt .*'$tlscrypt'/d' $ovpndest 
+   
 ########################################################################
 #   Add keys and certs inline
 #
-echo "key-direction 1" >> $ovpndest
-  
+#echo "key-direction 1" >> $ovpndest
+   
 echo "<ca>" >> $ovpndest
 awk /BEGIN/,/END/ < ./$ca >> $ovpndest
 echo "</ca>" >> $ovpndest
-  
+   
 echo "<cert>" >> $ovpndest
 awk /BEGIN/,/END/ < ./$cert >> $ovpndest
 echo "</cert>" >> $ovpndest
-  
+   
 echo "<key>" >> $ovpndest
 awk /BEGIN/,/END/ < ./$key >> $ovpndest
 echo "</key>" >> $ovpndest
-  
-echo "<tls-auth>" >> $ovpndest
-awk /BEGIN/,/END/ < ./$tlsauth >> $ovpndest
-echo "</tls-auth>" >> $ovpndest
-  
+   
+echo "<tls-crypt>" >> $ovpndest
+awk /BEGIN/,/END/ < ./$tlscrypt >> $ovpndest
+echo "</tls-crypt>" >> $ovpndest
+   
 ########################################################################
 #   Delete key and cert files
 #
