@@ -1,14 +1,14 @@
 #!/bin/bash
 cat <<EOF
 #########################################################################
-#       Setup OpenVPN + Obfsproxy to bypass Advanced Firewall           #
-#       Bypass Advanced Internet Censorship                             #
-#       Github : https://github.com/khavishbhundoo/obfsproxy-openvpn/   #                                                             #
+#       Setup OpenVPN + Obfsproxy to bypass Censorship                  #
+#       Bypass Advanced Internet Firewalls                              #
+#       Github : https://github.com/khavishbhundoo/obfsproxy-openvpn/   #
 #       Author : Khavish Anshudass Bhundoo                              #
 #########################################################################
 EOF
-if [ "$EUID" -ne 0 ]
-then echo "Please run as root"
+if [[ "$EUID" -ne 0 ]]; then
+  echo "Please run as root"
   exit 1
 fi
 
@@ -28,10 +28,20 @@ if [[ "$os" != "CentOS" && "$version" != "7" ]]; then
   exit 3
 fi
 
+function merge_certificates()
+{
+# $1 $HOME
+# $2 $cilent_user
+  wget -q https://www.dropbox.com/s/pvf7msz0yp9zlre/merge2.sh?dl=0 -O merge.sh
+  sudo chmod +x merge.sh
+  sudo ./merge.sh "$2" scrambled-client
+  chown "$USER" "$1"/client-files/"$2"/scrambled-client.ovpn
+  rm -rf merge.sh
+}
 
 function newinstall
 {
-  read -n1 -r -p "Use default certificates details (y/n)? : "   choice
+  read  -r -p "Use default certificates details (y/n)? : "   choice
   if [[ $choice = "" ]]; then
     choice="y"
   fi
@@ -80,7 +90,7 @@ function newinstall
       read -r  -p  "Desired username: "   cilent_user
       if getent passwd "$cilent_user" > /dev/null 2>&1; then
       # cilent_user already  exists
-        unset "$cilent_user"
+        cilent=""
       fi
     done
   fi
@@ -90,7 +100,7 @@ function newinstall
     :
   else
     echo  "Creating 512MB of swap space as no swap space currently exist"
-  #Create and activate a 512MB swap file
+    #Create and activate a 512MB swap file
     {
       dd if=/dev/zero of=/swapfile1 bs=1024 count=524288
       mkswap /swapfile1
@@ -113,7 +123,7 @@ function newinstall
       wget -q https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
       sudo rpm -Uvh epel-release-latest-7.noarch.rpm
       rm -rf epel-release-latest-7.noarch.rpm
-    #
+      #
     } &> /dev/null
   fi
 #Time to install and configure Yum Priorities
@@ -127,12 +137,12 @@ function newinstall
     sed  -e '/\[extras\]/,/gpgcheck=1/{/gpgcheck=1/{a\priority=10' -e ':a;n;ba}}' /etc/yum.repos.d/CentOS-Base.repo
     sed  -e '/\[centosplus\]/,/gpgcheck=1/{/gpgcheck=1/{a\priority=20' -e ':a;n;ba}}' /etc/yum.repos.d/CentOS-Base.repo
     sed  -e '/\[epel\]/,/gpgcheck=1/{/gpgcheck=1/{a\priority=65' -e ':a;n;ba}}' /etc/yum.repos.d/epel.repo
-  #Updating system
+    #Updating system
     echo "Updating System";
-    yum -y -q install yum-utils mlocate
+    yum -y -q install yum-utils mlocate deltarpm
     updatedb
     timedhosts_file=$(locate timedhosts.txt)
-  #Get fresh list of fastest mirrors
+    #Get fresh list of fastest mirrors
     rm -rf "$timedhosts_file"
     package-cleanup --cleandupes > /dev/null
     yum -y -q upgrade
@@ -187,9 +197,9 @@ function newinstall
         echo "export KEY_OU=\"$KEY_OU\""
       } >> /etc/openvpn/easy-rsa/2.0/vars
     fi
-  #At this point we should have vars set up
+    #At this point we should have vars set up
     source vars
-  #
+    #
     ./clean-all
     ./build-dh
     ./build-ca --batch
@@ -197,7 +207,6 @@ function newinstall
     if [[ ! $auth_choice =~ ^[Yy]$ ]] ; then
       cilent_user="cilent"
     fi
-
     ./build-key --batch "$cilent_user"
     cd /etc/openvpn/easy-rsa/2.0/keys
     cp ca.crt ca.key dh2048.pem server.crt server.key /etc/openvpn
@@ -238,13 +247,7 @@ socks-proxy-retry
 socks-proxy 127.0.0.1 1050
 EOL
     cd "$HOME"/client-files/"$cilent_user"
-  # Now merge certs and keys into client script, so we only have one file to handle
-    wget -q https://www.dropbox.com/s/gjbrl4xm1uv5wkx/merge.sh?dl=0 -O merge.sh
-    sudo chmod +x merge.sh
-    sudo ./merge.sh "$cilent_user" scrambled-client
-    chown "$USER" "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn
-    rm -rf merge.sh
-  #
+    merge_certificates "$HOME" "$cilent_user"
     cat > /etc/openvpn/server.conf <<EOL
 port 443
 proto tcp #for obfsproxy, otherwise udp
@@ -257,7 +260,8 @@ tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
 dh /etc/openvpn/dh2048.pem
 server 10.8.0.0 255.255.255.0
-crl-verify /etc/openvpn/crl.pem
+#Uncomment when removing certificates
+#crl-verify /etc/openvpn/crl.pem
 cipher AES-256-CBC
 compress lz4
 persist-key
@@ -291,19 +295,19 @@ EOL
       echo -e "$userpass\n$userpass" | passwd --stdin "$cilent_user"
     fi
 
-  #creating openvpn group and user
+    #creating openvpn group and user
     /usr/sbin/groupadd openvpn
     useradd -G openvpn openvpn
     systemctl restart openvpn@server
   } &> /dev/null
   echo "Adding proper firewall and ip forwarding rules"
   {
-  #
-  #Enable IP packet forwarding so that our VPN traffic can pass through.
+    #
+    #Enable IP packet forwarding so that our VPN traffic can pass through.
     sed -i 's/net.ipv4.ip_forward = 0/net.ipv4.ip_forward = 1/g' /etc/sysctl.conf
     grep -qF "net.ipv4.ip_forward" /etc/sysctl.conf  || echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf #Add setting to sysctl.conf if needed
     sysctl -p
-  #Adding proper firewall rules
+    #Adding proper firewall rules
     systemctl start firewalld
     systemctl enable firewalld
     firewall-cmd --permanent  --add-service http
@@ -360,7 +364,7 @@ function add_client
     read -r  -p  "Cilent username: "   cilent_user
     if getent passwd "$cilent_user" > /dev/null 2>&1; then
     # cilent_user already  exists
-      unset "$cilent_user"
+      cilent_user=""
     fi
   done
   echo "Creating certificates for $cilent_user"
@@ -400,14 +404,9 @@ EOL
     cp ca.crt "$cilent_user".crt "$cilent_user".key "$HOME"/client-files/"$cilent_user"
     cp /etc/openvpn/ta.key "$HOME"/client-files/"$cilent_user"
     cd "$HOME"/client-files/"$cilent_user"
-  # Now merge certs and keys into client script, so we only have one file to handle
-    wget -q https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/merge.sh -O merge.sh
-    sudo chmod +x merge.sh
-    sudo ./merge.sh "$cilent_user" scrambled-client
-    chown "$USER" "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn
-    rm -rf merge.sh
+    merge_certificates "$HOME" "$cilent_user"
 
-  # Check if user / pass authentication is used
+    # Check if user / pass authentication is used
     if [[ $(grep -o '^[^#]*' /etc/openvpn/server.conf | grep "openvpn-plugin-auth-pam.so") ]] ; then
     #Add new user account + generate password
       useradd -M -N -r -s /bin/false -c "OpenVPN cilent : $cilent_user"
@@ -435,25 +434,58 @@ EOF
 }
 
 
+
 function delete_client
 {
 #Setting Home directory
   HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
-  read -r -p "Type the client username which you want to delete : "  cilent
-  {
-  # Check if user / pass authentication is used
+  while [[ -z "$cilent" ]]
+  do
+    read -r -p "Type the client username which you want to delete : "  cilent
+  done
+
+  read  -r -p "Are you sure you want to delete user $cilent (y/n)? : " choice
+
+  if [[ $choice =~ ^[Yy]$ ]] ; then
+
+  #Check if we are using user / pass authentication
+  #Delete the user account associated with that OpenVPN cilent
     if [[ $(grep -o '^[^#]*' /etc/openvpn/server.conf | grep "openvpn-plugin-auth-pam.so") ]] ; then
-      read -n1 -r -p "Are you sure you want to delete user $cilent (y/n)? : " choice
-      if [[ $choice =~ ^[Yy]$ ]] ; then
+
+      #We are using authentication
+      #Ensure we are not trying to delete our current user account
+      if [[ $cilent == "$SUDO_USER" ]] ; then
+        echo "It seems that you are logged in with the user account that you are trying to delete.This situation happens when you enabled user/password authentication after first install.Skipping user account deletion"
+      elif ! getent passwd "$cilent" > /dev/null 2>&1;  then
+      # Ensure that the user account exist
+        echo "The user account named $cilent doesn't exist"
+      else
+        #At this point we can safely delete the user account
         userdel -Z -r -f "$cilent"
+        echo "$cilent user account removed successfully"
       fi
+
     fi
+
+    #Now we revoke the certificates and reload openvpn
     rm -rf "$HOME"/client-files/"$cilent"
     cd /etc/openvpn/easy-rsa/2.0/
-    ./revoke-full "$cilent"
+    source vars &> /dev/null
+    if ./revoke-full "$cilent" | grep -q 'error 23 at 0 depth lookup:certificate revoked'; then
+      echo "$cilent certificates revoked successfully"
+      rm -rf /etc/openvpn/crl.pem
+      cp keys/crl.pem /etc/openvpn/crl.pem
+      sed -i 's|#crl-verify /etc/openvpn/crl.pem|crl-verify /etc/openvpn/crl.pem|g' /etc/openvpn/server.conf
+    fi
     systemctl reload-or-restart openvpn@server
-  } &> /dev/null
-  echo "$cilent have been removed successfully"
+    cat >> "$HOME"/details.txt <<EOF
+#########################################
+#Client Deleted Successfully            #
+#########################################
+${cilent} has been deleted!
+EOF
+
+  fi
 }
 
 PS3='Please enter your choice(1-4): '
