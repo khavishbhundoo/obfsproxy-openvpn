@@ -5,8 +5,8 @@ obfsproxy-openvpn                                                     CHANGELOG
 
 - Replace tls-auth with tls-crypt
 - Added additional sanity checks for delete cilent
-
-
+- Updated Easy-RSA to latest version (easy-rsa3)
+- Removed deprecated options in cilent & server config
 
 
 28 May 2017, v0.1
