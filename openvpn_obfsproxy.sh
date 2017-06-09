@@ -131,6 +131,7 @@ EOF
       #
     } &> /dev/null
   fi
+  echo "Updating server softwares (This might take a while)"
 #Time to install and configure Yum Priorities
   {
     yum clean all
@@ -142,8 +143,6 @@ EOF
     sed  -e '/\[extras\]/,/gpgcheck=1/{/gpgcheck=1/{a\priority=10' -e ':a;n;ba}}' /etc/yum.repos.d/CentOS-Base.repo
     sed  -e '/\[centosplus\]/,/gpgcheck=1/{/gpgcheck=1/{a\priority=20' -e ':a;n;ba}}' /etc/yum.repos.d/CentOS-Base.repo
     sed  -e '/\[epel\]/,/gpgcheck=1/{/gpgcheck=1/{a\priority=65' -e ':a;n;ba}}' /etc/yum.repos.d/epel.repo
-    #Updating system
-    echo "Updating System";
     yum -y -q install yum-utils mlocate deltarpm
     updatedb
     timedhosts_file=$(locate timedhosts.txt)
@@ -153,7 +152,7 @@ EOF
     yum -y -q upgrade
     yum -y -q update
   } &> /dev/null
-  echo "Server Softwares and Kernel Updated...."
+  echo "Server Softwares Updated!"
 #Installing some commonly used tools
   echo "Installing useful tools{nano , wget, make}"
   {
@@ -187,6 +186,9 @@ EOF
     if [[ ! $choice =~ ^[Yy]$ ]] ; then
     #Add our custom certificates values
       {
+	 echo "set_var EASYRSA_ALGO ec"
+	 echo "set_var EASYRSA_CURVE sect571r1"
+	 echo "set_var EASYRSA_DIGEST \"sha512\""
      echo "set_var EASYRSA_DN \"cn_only\""
      echo "set_var EASYRSA_REQ_COUNTRY \"$KEY_COUNTRY\""
      echo "set_var EASYRSA_REQ_PROVINCE \"$KEY_PROVINCE\""
@@ -200,13 +202,12 @@ EOF
 	./easyrsa init-pki
     ./easyrsa --batch build-ca nopass
     ./easyrsa build-server-full server nopass
-    openssl dhparam 2048 -out dh2048.pem
     if [[ ! $auth_choice =~ ^[Yy]$ ]] ; then
       cilent_user="cilent"
     fi
 	./easyrsa build-client-full "$cilent_user" nopass
 	./easyrsa gen-crl
-	cp pki/ca.crt pki/private/ca.key dh2048.pem  pki/issued/server.crt pki/private/server.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn	
+	cp pki/ca.crt pki/private/ca.key  pki/issued/server.crt pki/private/server.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn	
     mkdir -p "$HOME"/client-files/"$cilent_user"
     cp pki/ca.crt  pki/issued/"$cilent_user".crt pki/private/"$cilent_user".key  "$HOME"/client-files/"$cilent_user"
     openvpn --genkey --secret /etc/openvpn/ta.key
@@ -231,8 +232,9 @@ ca ca.crt
 cert client.crt
 key client.key
 tls-crypt  ta.key
+tls-client
 remote-cert-tls server
-cipher AES-256-CBC
+cipher AES-256-GCM
 compress lz4
 #Uncomment if you use user/pass authentication
 #auth-user-pass
@@ -254,11 +256,13 @@ key /etc/openvpn/server.key
 tls-crypt /etc/openvpn/ta.key
 tls-version-min 1.2
 tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
-dh /etc/openvpn/dh2048.pem
+tls-server
+dh none
+ecdh-curve sect571r1
 server 10.8.0.0 255.255.255.0
 #Uncomment when removing certificates
 #crl-verify /etc/openvpn/crl.pem
-cipher AES-256-CBC
+cipher AES-256-GCM
 compress lz4
 persist-key
 persist-tun
@@ -382,8 +386,9 @@ ca ca.crt
 cert client.crt
 key client.key
 tls-crypt  ta.key
+tls-client
 remote-cert-tls server
-cipher AES-256-CBC
+cipher AES-256-GCM
 compress lz4
 #Uncomment if you use user/pass authentication
 #auth-user-pass
