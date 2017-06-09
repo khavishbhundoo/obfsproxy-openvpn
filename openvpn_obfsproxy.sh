@@ -23,8 +23,8 @@ fi
   version=$(lsb_release -sr | sed 's/\.[^ ]*/ /g') # Version = 7
 } &> /dev/null
 
-if [[ "$os" != "CentOS" && "$version" != "7" ]]; then
-  echo "You need to have Centos 7.x installed"
+if [[ "$os" != "CentOS" && "$os" != "RedHatEnterpriseServer" && "$version" != "7" ]]; then
+  echo "You need to have CentOS/RHEL 7.x installed"
   exit 3
 fi
 
@@ -41,6 +41,11 @@ function merge_certificates()
 
 function newinstall
 {
+cat <<EOF
+There is no need to specify information such as Country/State/City/Organisation/Organizational Unit 
+while generating certificates for VPN usage.However if for reason(s) you want to include organisational 
+fields in your certificates , choose no otherwise type yes (or press enter)
+EOF
   read  -r -p "Use default certificates details (y/n)? : "   choice
   if [[ $choice = "" ]]; then
     choice="y"
@@ -67,12 +72,12 @@ function newinstall
       read -r -p "Organization : "  KEY_ORG
     done
 
-    while [[ -z "$KEY_ORG" ]]
+    while [[ -z "$KEY_EMAIL" ]]
     do
       read -r -p "Email : "   KEY_EMAIL
     done
 
-    while [[ -z "$KEY_ORG" ]]
+    while [[ -z "$KEY_OU" ]]
     do
       read -r -p "Organizational Unit : "  KEY_OU
     done
@@ -174,44 +179,36 @@ function newinstall
 #Downloading Easy RSA package to create keys and certificates
   echo "Setting Up Keys and Certificates(This might take a while)"
   {
-    yum remove -y -q easy-rsa
-    yum install -y -q easy-rsa
-    rsync -av /usr/share/easy-rsa/ /etc/openvpn/easy-rsa/
+    wget -q https://github.com/OpenVPN/easy-rsa/releases/download/3.0.1/EasyRSA-3.0.1.tgz
+    tar -xzf EasyRSA-3.0.1.tgz
+    rsync -av ./EasyRSA-3.0.1/ /etc/openvpn/easy-rsa/
     chown -R "$USER" /etc/openvpn/easy-rsa/
-    cd /etc/openvpn/easy-rsa/2.0/
+    cd /etc/openvpn/easy-rsa/
     if [[ ! $choice =~ ^[Yy]$ ]] ; then
-    #Comment default values in file
-      sed -i 's/export KEY_COUNTRY="US"/#export KEY_COUNTRY="US"/g' /etc/openvpn/easy-rsa/2.0/vars
-      sed -i 's/export KEY_PROVINCE="CA"/#export KEY_PROVINCE="CA"/g' /etc/openvpn/easy-rsa/2.0/vars
-      sed -i 's/export KEY_CITY="SanFrancisco"/#export KEY_CITY="SanFrancisco"/g' /etc/openvpn/easy-rsa/2.0/vars
-      sed -i 's/export KEY_ORG="Fort-Funston"/#export KEY_ORG="Fort-Funston"/g' /etc/openvpn/easy-rsa/2.0/vars
-      sed -i 's/export KEY_EMAIL="me@myhost.mydomain"/#export KEY_EMAIL="me@myhost.mydomain""/g' /etc/openvpn/easy-rsa/2.0/vars
-      sed -i 's/export KEY_OU="MyOrganizationalUnit"/#export KEY_OU="MyOrganizationalUnit"/g' /etc/openvpn/easy-rsa/2.0/vars
     #Add our custom certificates values
       {
-        echo "export KEY_COUNTRY=\"$KEY_COUNTRY\""
-        echo "export KEY_PROVINCE=\"$KEY_PROVINCE\""
-        echo "export KEY_CITY=\"$KEY_CITY\""
-        echo "export KEY_ORG=\"$KEY_ORG\""
-        echo "export KEY_EMAIL=\"$KEY_EMAIL\""
-        echo "export KEY_OU=\"$KEY_OU\""
-      } >> /etc/openvpn/easy-rsa/2.0/vars
+     echo "set_var EASYRSA_DN \"cn_only\""
+     echo "set_var EASYRSA_REQ_COUNTRY \"$KEY_COUNTRY\""
+     echo "set_var EASYRSA_REQ_PROVINCE \"$KEY_PROVINCE\""
+     echo "set_var EASYRSA_REQ_CITY \"$KEY_CITY\""
+     echo "set_var EASYRSA_REQ_ORG \"$KEY_ORG\""
+     echo "set_var EASYRSA_REQ_EMAIL \"$KEY_EMAIL\"" 
+     echo "set_var EASYRSA_REQ_OU \"$KEY_OU\""
+      } >> /etc/openvpn/easy-rsa/vars
     fi
-    #At this point we should have vars set up
-    source vars
-    #
-    ./clean-all
-    ./build-dh
-    ./build-ca --batch
-    ./build-key-server --batch server
+	
+	./easyrsa init-pki
+    ./easyrsa --batch build-ca nopass
+    ./easyrsa build-server-full server nopass
+    openssl dhparam 2048 -out dh2048.pem
     if [[ ! $auth_choice =~ ^[Yy]$ ]] ; then
       cilent_user="cilent"
     fi
-    ./build-key --batch "$cilent_user"
-    cd /etc/openvpn/easy-rsa/2.0/keys
-    cp ca.crt ca.key dh2048.pem server.crt server.key /etc/openvpn
+	./easyrsa build-client-full "$cilent_user" nopass
+	./easyrsa gen-crl
+	cp pki/ca.crt pki/private/ca.key dh2048.pem  pki/issued/server.crt pki/private/server.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn	
     mkdir -p "$HOME"/client-files/"$cilent_user"
-    cp ca.crt "$cilent_user".crt "$cilent_user".key "$HOME"/client-files/"$cilent_user"
+    cp pki/ca.crt  pki/issued/"$cilent_user".crt pki/private/"$cilent_user".key  "$HOME"/client-files/"$cilent_user"
     openvpn --genkey --secret /etc/openvpn/ta.key
     cp /etc/openvpn/ta.key "$HOME"/client-files/"$cilent_user"
   } &> /dev/null
@@ -234,7 +231,7 @@ ca ca.crt
 cert client.crt
 key client.key
 tls-crypt  ta.key
-ns-cert-type server
+remote-cert-tls server
 cipher AES-256-CBC
 compress lz4
 #Uncomment if you use user/pass authentication
@@ -243,7 +240,6 @@ block-outside-dns
 verb 3
 auth SHA512
 script-security 2
-socks-proxy-retry
 socks-proxy 127.0.0.1 1050
 EOL
     cd "$HOME"/client-files/"$cilent_user"
@@ -273,7 +269,6 @@ status openvpn-status.log
 #plugin /usr/lib64/openvpn/plugins/openvpn-plugin-auth-pam.so login
 verb 3
 tun-mtu 1500
-tun-mtu-extra 32
 mssfix 1450
 push "redirect-gateway def1"
 push "dhcp-option DNS 8.8.8.8" #Google DNS
@@ -370,9 +365,8 @@ function add_client
   echo "Creating certificates for $cilent_user"
 #Building the certificates
   {
-    cd /etc/openvpn/easy-rsa/2.0/
-    source vars
-    ./build-key --batch "$cilent_user"
+    cd /etc/openvpn/easy-rsa/
+	./easyrsa build-client-full "$cilent_user" nopass
     mkdir -p "$HOME"/client-files/"$cilent_user"
     ipaddr=$(curl -s http://whatismyip.akamai.com/)
     cat > "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn <<EOL
@@ -388,7 +382,7 @@ ca ca.crt
 cert client.crt
 key client.key
 tls-crypt  ta.key
-ns-cert-type server
+remote-cert-tls server
 cipher AES-256-CBC
 compress lz4
 #Uncomment if you use user/pass authentication
@@ -397,11 +391,10 @@ block-outside-dns
 verb 3
 auth SHA512
 script-security 2
-socks-proxy-retry
 socks-proxy 127.0.0.1 1050
 EOL
-    cd /etc/openvpn/easy-rsa/2.0/keys
-    cp ca.crt "$cilent_user".crt "$cilent_user".key "$HOME"/client-files/"$cilent_user"
+    cd /etc/openvpn/easy-rsa/
+    cp pki/ca.crt  pki/issued/"$cilent_user".crt pki/private/"$cilent_user".key  "$HOME"/client-files/"$cilent_user"
     cp /etc/openvpn/ta.key "$HOME"/client-files/"$cilent_user"
     cd "$HOME"/client-files/"$cilent_user"
     merge_certificates "$HOME" "$cilent_user"
@@ -469,12 +462,15 @@ function delete_client
 
     #Now we revoke the certificates and reload openvpn
     rm -rf "$HOME"/client-files/"$cilent"
-    cd /etc/openvpn/easy-rsa/2.0/
-    source vars &> /dev/null
-    if ./revoke-full "$cilent" | grep -q 'error 23 at 0 depth lookup:certificate revoked'; then
+    cd /etc/openvpn/easy-rsa/
+    if ./easyrsa --batch revoke "$cilent" | grep -q 'Revoking Certificate'; then
       echo "$cilent certificates revoked successfully"
+	  ./easyrsa gen-crl
+	  rm -rf pki/reqs/"$cilent".req
+	  rm -rf pki/private/"$cilent".key
+	  rm -rf pki/issued/"$cilent".crt
       rm -rf /etc/openvpn/crl.pem
-      cp keys/crl.pem /etc/openvpn/crl.pem
+      cp /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn/crl.pem
       sed -i 's|#crl-verify /etc/openvpn/crl.pem|crl-verify /etc/openvpn/crl.pem|g' /etc/openvpn/server.conf
     fi
     systemctl reload-or-restart openvpn@server
