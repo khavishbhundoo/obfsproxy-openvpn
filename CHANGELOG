@@ -7,7 +7,7 @@ obfsproxy-openvpn                                                     CHANGELOG
 - Added additional sanity checks for delete cilent
 - Updated Easy-RSA to latest version (easy-rsa3)
 - Removed deprecated options in cilent & server config
-
+- Use ECDH instead of DH
 
 28 May 2017, v0.1
 
