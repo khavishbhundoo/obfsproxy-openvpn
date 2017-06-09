@@ -18,7 +18,7 @@ if [[ ! -e /dev/net/tun ]]; then
 fi
 
 {
-  yum -y -q install redhat-lsb-core # installing lsb_release
+  rpm -qa | grep  redhat-lsb-core || yum install -y -q redhat-lsb-core # installing lsb_release if not installed
   os=$(lsb_release -si) #CentOS
   version=$(lsb_release -sr | sed 's/\.[^ ]*/ /g') # Version = 7
 } &> /dev/null
