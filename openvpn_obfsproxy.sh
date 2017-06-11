@@ -36,7 +36,7 @@ function merge_certificates()
 {
 # $1 $HOME
 # $2 $cilent_user
-  wget -q https://www.dropbox.com/s/pvf7msz0yp9zlre/merge2.sh?dl=0 -O merge.sh
+  wget -q https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/merge.sh -O merge.sh
   sudo chmod +x merge.sh
   sudo ./merge.sh "$2" scrambled-client
   chown "$USER" "$1"/client-files/"$2"/scrambled-client.ovpn
@@ -111,7 +111,7 @@ EOF
     echo  "Creating 512MB of swap space as no swap space currently exist"
     #Create and activate a 512MB swap file
     {
-	  fallocate -l 512M /swap16
+      fallocate -l 512M /swapfile1
       mkswap /swapfile1
       chown "$USER":"$USER" /swapfile1
       chmod 0600 /swapfile1
