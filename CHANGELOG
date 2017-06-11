@@ -1,6 +1,17 @@
 obfsproxy-openvpn                                                     CHANGELOG
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+11 June 2017, v0.2
+
+- Replace tls-auth with tls-crypt
+- Added additional sanity checks for delete cilent
+- Updated Easy-RSA to latest version (easy-rsa3)
+- Removed deprecated options in cilent & server config
+- Use ECDH instead of DH
+- Improve swap generation performance with fallocate
+- Fix cronjob 
+- Minor bug fixes 
+
 28 May 2017, v0.1
 
 - Added a menu display

@@ -67,11 +67,17 @@ You would need to install latest python 2.7.x and then run the following command
 
 # Firewall rules for Cloud Platforms
 
-If your server is actually a VM instance on cloud platforms like Google Compute Engine(GCE) or Amazon EC2 you need to add a firewall rule manually as well
+If your server is actually a VM instance on cloud platforms like Google Compute Engine(GCE) or Amazon EC2 you need to add a firewall rule manually as well.
+
+The following tcp ports should be open : 443 , 21194
+
+IP forwarding should be ON
 
 Below is how it should be if you are on GCE
 
 ![firewall](https://github.com/khavishbhundoo/obfsproxy-openvpn/blob/master/firewalld.png)
+
+
 
 # Video
 [![video tutorial](https://img.youtube.com/vi/BNcowGTHHDI/0.jpg)](https://www.youtube.com/watch?v=BNcowGTHHDI)
