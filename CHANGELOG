@@ -1,7 +1,7 @@
 obfsproxy-openvpn                                                     CHANGELOG
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-?? ??? ????, v0.2
+11 June 2017, v0.2
 
 - Replace tls-auth with tls-crypt
 - Added additional sanity checks for delete cilent
