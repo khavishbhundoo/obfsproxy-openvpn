@@ -365,10 +365,16 @@ function add_client
   while [[ -z "$cilent_user" ]]
   do
     read -r  -p  "Cilent username: "   cilent_user
+	#check if  user account exist if we are using user/password
+	if [[ $(grep -o '^[^#]*' /etc/openvpn/server.conf | grep "openvpn-plugin-auth-pam.so") ]] ; then
     if getent passwd "$cilent_user" > /dev/null 2>&1; then
-    # cilent_user already  exists
+	  echo "cilent already exists...Try again!"
       cilent_user=""
     fi
+	elif [ -f "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn ]; then
+	  echo "cilent already exists...Try again!"
+      cilent_user=""
+	fi
   done
   echo "Creating certificates for $cilent_user"
 #Building the certificates
@@ -411,9 +417,9 @@ EOL
     # Check if user / pass authentication is used
     if [[ $(grep -o '^[^#]*' /etc/openvpn/server.conf | grep "openvpn-plugin-auth-pam.so") ]] ; then
     #Add new user account + generate password
-      useradd -M -N -r -s /bin/false -c "OpenVPN cilent : $cilent_user"
+      useradd -M -N -r -s /bin/false -c "OpenVPN cilent" "$cilent_user"
       userpass=$(pwgen -1 -s 10)
-      echo -e "$userpass\n$userpass" | passwd --stdin "$cilent_user"
+      chpasswd <<< "$cilent_user:$userpass"
       sed -i 's/#auth-user-pass/auth-user-pass/g' "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn
       cat >> "$HOME"/details.txt <<EOF
 #########################################
