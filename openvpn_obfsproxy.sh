@@ -17,6 +17,10 @@ if [[ ! -e /dev/net/tun ]]; then
   exit 2
 fi
 
+if [ "$1" == "--version" ]; then
+  echo 0.2
+fi
+
 {
   rpm -qa | grep  redhat-lsb-core || yum install -y -q redhat-lsb-core # installing lsb_release if not installed
   os=$(lsb_release -si) #CentOS
@@ -107,7 +111,7 @@ EOF
     echo  "Creating 512MB of swap space as no swap space currently exist"
     #Create and activate a 512MB swap file
     {
-      dd if=/dev/zero of=/swapfile1 bs=1024 count=524288
+	  fallocate -l 512M /swap16
       mkswap /swapfile1
       chown "$USER":"$USER" /swapfile1
       chmod 0600 /swapfile1
@@ -217,7 +221,7 @@ EOF
 
 
   echo "Configuring OpenVPN with obfsproxy"
-  {
+   {
     ipaddr=$(curl -s http://whatismyip.akamai.com/)
     cat > "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn <<EOL
 client
@@ -287,11 +291,11 @@ EOL
 
     if [[ $auth_choice =~ ^[Yy]$ ]] ; then
       sed -i 's/#auth-user-pass/auth-user-pass/g' "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn
-      sed -i 's|#plugin /usr/lib64/openvpn/plugins/openvpn-plugin-auth-pam.so login|plugin /usr/lib64/openvpn/plugins/openvpn-plugin-auth-pam.so loging' /etc/openvpn/server.conf
-      useradd -M -N -r -s /bin/false -c "OpenVPN cilent : $cilent_user"
+      sed -i 's|#plugin /usr/lib64/openvpn/plugins/openvpn-plugin-auth-pam.so login|plugin /usr/lib64/openvpn/plugins/openvpn-plugin-auth-pam.so login|g' /etc/openvpn/server.conf
+      useradd -M -N -r -s /bin/false -c "OpenVPN cilent" "$cilent_user"
       yum -y -q install pwgen
       userpass=$(pwgen -1 -s 10)
-      echo -e "$userpass\n$userpass" | passwd --stdin "$cilent_user"
+	  chpasswd <<< "$cilent_user:$userpass"
     fi
 
     #creating openvpn group and user
@@ -325,15 +329,15 @@ EOL
     yum -y -q install cronie-noanacron
     cat > /etc/cron.daily/openvpn.cron << EOF
 #!/bin/bash
-CURRENT_OPENVPN=$(openvpn --version | cut -d' ' -f2 | awk '{print $1; exit}')
+CURRENT_OPENVPN=\$(openvpn --version | cut -d' ' -f2 | awk '{print $1; exit}')
 yum -y -q update
-RECENT_OPENVPN=$(openvpn --version | cut -d' ' -f2 | awk '{print $1; exit}')
-test $RECENT_OPENVPN = $CURRENT_OPENVPN || echo systemctl restart openvpn@server
+RECENT_OPENVPN=\$(openvpn --version | cut -d' ' -f2 | awk '{print $1; exit}')
+test \$RECENT_OPENVPN = \$CURRENT_OPENVPN || echo systemctl restart openvpn@server
 pip install --upgrade pip
 pip install --upgrade obfsproxy
-LAST_KERNEL=$(rpm -q --last kernel | perl -pe 's/^kernel-(\S+).*/$1/' | head -1)
-CURRENT_KERNEL=$(uname -r)
-test $LAST_KERNEL = $CURRENT_KERNEL || echo REBOOT
+LAST_KERNEL=\$(rpm -q --last kernel | perl -pe 's/^kernel-(\S+).*/$1/' | head -1)
+CURRENT_KERNEL=\$(uname -r)
+test \$LAST_KERNEL = \$CURRENT_KERNEL || echo REBOOT
 EOF
     chmod +x /etc/cron.daily/openvpn.cron
   } &> /dev/null
@@ -348,8 +352,8 @@ Read Tutorial @ https://github.com/khavishbhundoo/obfsproxy-openvpn/ and setup o
 EOF
   if [[ $auth_choice =~ ^[Yy]$ ]] ; then
     cat >> "$HOME"/details.txt <<EOF
-Client username :  ${cilent_user}
-Client password :  ${userpass}
+Client username : ${cilent_user}
+Client password : ${userpass}
 EOF
   fi
   cat "$HOME"/details.txt
