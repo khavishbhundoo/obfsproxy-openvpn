@@ -80,7 +80,7 @@ Below is how it should be if you are on GCE
 
 
 # Video
-[![video tutorial](https://img.youtube.com/vi/BNcowGTHHDI/0.jpg)](https://www.youtube.com/watch?v=BNcowGTHHDI)
+[![video tutorial](https://img.youtube.com/vi/TVCSlfjnVTM/0.jpg)](https://www.youtube.com/watch?v=TVCSlfjnVTM)
 
 
 # Disclaimer
