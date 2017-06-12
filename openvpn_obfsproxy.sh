@@ -18,7 +18,7 @@ if [[ ! -e /dev/net/tun ]]; then
 fi
 
 if [ "$1" == "--version" ]; then
-  echo 0.2
+  echo 0.2.1
 fi
 
 {
@@ -111,7 +111,7 @@ EOF
     echo  "Creating 512MB of swap space as no swap space currently exist"
     #Create and activate a 512MB swap file
     {
-      fallocate -l 512M /swapfile1
+	  fallocate -l 512M /swapfile1
       mkswap /swapfile1
       chown "$USER":"$USER" /swapfile1
       chmod 0600 /swapfile1
@@ -191,15 +191,22 @@ EOF
     #Add our custom certificates values
       {
 	 echo "set_var EASYRSA_ALGO ec"
-	 echo "set_var EASYRSA_CURVE sect571r1"
+	 echo "set_var EASYRSA_CURVE secp521r1"
 	 echo "set_var EASYRSA_DIGEST \"sha512\""
-     echo "set_var EASYRSA_DN \"cn_only\""
+     echo "set_var EASYRSA_DN \"org\""
      echo "set_var EASYRSA_REQ_COUNTRY \"$KEY_COUNTRY\""
      echo "set_var EASYRSA_REQ_PROVINCE \"$KEY_PROVINCE\""
      echo "set_var EASYRSA_REQ_CITY \"$KEY_CITY\""
      echo "set_var EASYRSA_REQ_ORG \"$KEY_ORG\""
      echo "set_var EASYRSA_REQ_EMAIL \"$KEY_EMAIL\"" 
      echo "set_var EASYRSA_REQ_OU \"$KEY_OU\""
+      } >> /etc/openvpn/easy-rsa/vars
+	else 
+	  {
+	  #by default use elliptic curve
+	 echo "set_var EASYRSA_ALGO ec"
+	 echo "set_var EASYRSA_CURVE secp521r1"
+	 echo "set_var EASYRSA_DIGEST \"sha512\""
       } >> /etc/openvpn/easy-rsa/vars
     fi
 	
@@ -259,7 +266,7 @@ cert /etc/openvpn/server.crt
 key /etc/openvpn/server.key
 tls-crypt /etc/openvpn/ta.key
 tls-version-min 1.2
-tls-cipher TLS-ECDHE-RSA-WITH-AES-256-GCM-SHA384
+tls-cipher TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384
 tls-server
 dh none
 ecdh-curve sect571r1
