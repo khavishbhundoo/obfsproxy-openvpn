@@ -12,11 +12,12 @@ Run the following after having logined as a user with admin privileges to execut
 
 `curl -so openvpn_obfsproxy.sh -L  https://raw.githubusercontent.com/khavishbhundoo/obfsproxy-openvpn/master/openvpn_obfsproxy.sh  && sudo bash openvpn_obfsproxy.sh`
 
+Check the video for a [live demo of the installation](https://github.com/khavishbhundoo/obfsproxy-openvpn/#video) 
 
 After the execution is complete , download the `scrambled-client.ovpn` file.
 
 # Usage
-This section will consist of detailed instructions on how to connect to the VPN 
+This section will consist of detailed instructions on how to connect to the VPN.
 
 ### Windows
 1.Download and Install the [latest version of OpenVPN](https://openvpn.net/index.php/open-source/downloads.html)
