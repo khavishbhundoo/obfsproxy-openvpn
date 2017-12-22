@@ -18,7 +18,7 @@ if [[ ! -e /dev/net/tun ]]; then
 fi
 
 if [ "$1" == "--version" ]; then
-  echo 0.2.1
+  echo 0.2.2
 fi
 
 {
@@ -45,9 +45,9 @@ function merge_certificates()
 
 function newinstall
 {
-cat <<EOF
-There is no need to specify information such as Country/State/City/Organisation/Organizational Unit 
-while generating certificates for VPN usage.However if for reason(s) you want to include organisational 
+  cat <<EOF
+There is no need to specify information such as Country/State/City/Organisation/Organizational Unit
+while generating certificates for VPN usage.However if for reason(s) you want to include organisational
 fields in your certificates , choose no otherwise type yes (or press enter)
 EOF
   read  -r -p "Use default certificates details (y/n)? : "   choice
@@ -111,7 +111,7 @@ EOF
     echo  "Creating 512MB of swap space as no swap space currently exist"
     #Create and activate a 512MB swap file
     {
-	  fallocate -l 512M /swapfile1
+      fallocate -l 512M /swapfile1
       mkswap /swapfile1
       chown "$USER":"$USER" /swapfile1
       chmod 0600 /swapfile1
@@ -160,7 +160,7 @@ EOF
 #Installing some commonly used tools
   echo "Installing useful tools{nano , wget, make}"
   {
-    yum -y -q install nano wget make
+    yum -y -q install nano wget make rsync
   } 2>&1 | grep -v "already installed and latest version"
   echo "Installing OpenVPN"
   {
@@ -190,35 +190,35 @@ EOF
     if [[ ! $choice =~ ^[Yy]$ ]] ; then
     #Add our custom certificates values
       {
-	 echo "set_var EASYRSA_ALGO ec"
-	 echo "set_var EASYRSA_CURVE secp521r1"
-	 echo "set_var EASYRSA_DIGEST \"sha512\""
-     echo "set_var EASYRSA_DN \"org\""
-     echo "set_var EASYRSA_REQ_COUNTRY \"$KEY_COUNTRY\""
-     echo "set_var EASYRSA_REQ_PROVINCE \"$KEY_PROVINCE\""
-     echo "set_var EASYRSA_REQ_CITY \"$KEY_CITY\""
-     echo "set_var EASYRSA_REQ_ORG \"$KEY_ORG\""
-     echo "set_var EASYRSA_REQ_EMAIL \"$KEY_EMAIL\"" 
-     echo "set_var EASYRSA_REQ_OU \"$KEY_OU\""
+        echo "set_var EASYRSA_ALGO ec"
+        echo "set_var EASYRSA_CURVE secp521r1"
+        echo "set_var EASYRSA_DIGEST \"sha512\""
+        echo "set_var EASYRSA_DN \"org\""
+        echo "set_var EASYRSA_REQ_COUNTRY \"$KEY_COUNTRY\""
+        echo "set_var EASYRSA_REQ_PROVINCE \"$KEY_PROVINCE\""
+        echo "set_var EASYRSA_REQ_CITY \"$KEY_CITY\""
+        echo "set_var EASYRSA_REQ_ORG \"$KEY_ORG\""
+        echo "set_var EASYRSA_REQ_EMAIL \"$KEY_EMAIL\""
+        echo "set_var EASYRSA_REQ_OU \"$KEY_OU\""
       } >> /etc/openvpn/easy-rsa/vars
-	else 
-	  {
-	  #by default use elliptic curve
-	 echo "set_var EASYRSA_ALGO ec"
-	 echo "set_var EASYRSA_CURVE secp521r1"
-	 echo "set_var EASYRSA_DIGEST \"sha512\""
+    else
+      {
+        #by default use elliptic curve
+        echo "set_var EASYRSA_ALGO ec"
+        echo "set_var EASYRSA_CURVE secp521r1"
+        echo "set_var EASYRSA_DIGEST \"sha512\""
       } >> /etc/openvpn/easy-rsa/vars
     fi
-	
-	./easyrsa init-pki
+
+    ./easyrsa init-pki
     ./easyrsa --batch build-ca nopass
     ./easyrsa build-server-full server nopass
     if [[ ! $auth_choice =~ ^[Yy]$ ]] ; then
       cilent_user="cilent"
     fi
-	./easyrsa build-client-full "$cilent_user" nopass
-	./easyrsa gen-crl
-	cp pki/ca.crt pki/private/ca.key  pki/issued/server.crt pki/private/server.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn	
+    ./easyrsa build-client-full "$cilent_user" nopass
+    ./easyrsa gen-crl
+    cp pki/ca.crt pki/private/ca.key  pki/issued/server.crt pki/private/server.key /etc/openvpn/easy-rsa/pki/crl.pem /etc/openvpn
     mkdir -p "$HOME"/client-files/"$cilent_user"
     cp pki/ca.crt  pki/issued/"$cilent_user".crt pki/private/"$cilent_user".key  "$HOME"/client-files/"$cilent_user"
     openvpn --genkey --secret /etc/openvpn/ta.key
@@ -228,7 +228,7 @@ EOF
 
 
   echo "Configuring OpenVPN with obfsproxy"
-   {
+  {
     ipaddr=$(curl -s http://whatismyip.akamai.com/)
     cat > "$HOME"/client-files/"$cilent_user"/scrambled-client.ovpn <<EOL
 client
@@ -302,7 +302,7 @@ EOL
       useradd -M -N -r -s /bin/false -c "OpenVPN cilent" "$cilent_user"
       yum -y -q install pwgen
       userpass=$(pwgen -1 -s 10)
-	  chpasswd <<< "$cilent_user:$userpass"
+      chpasswd <<< "$cilent_user:$userpass"
     fi
 
     #creating openvpn group and user
