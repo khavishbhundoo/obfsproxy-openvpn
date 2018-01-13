@@ -18,7 +18,7 @@ if [[ ! -e /dev/net/tun ]]; then
 fi
 
 if [ "$1" == "--version" ]; then
-  echo 0.2.2
+  echo 0.2.3
 fi
 
 {
