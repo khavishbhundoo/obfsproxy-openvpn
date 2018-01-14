@@ -1,6 +1,10 @@
 obfsproxy-openvpn                                                     CHANGELOG
 |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
+22 Dec 2017, v0.2.2
+
+- Added missing rsync install 
+
 11 June 2017, v0.2.1
 
 - Elliptic curve was not used when authentication was not used
